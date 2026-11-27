@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wedding Gift Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: single column ledger — legal banner, budget strip, gift register, summary, printable-style list */
+:root {
+  --bg: #fbf8f6;
+  --surface: #ffffff;
+  --fg: #2a1d1f;
+  --muted: #74656a;
+  --line: #e8dfe0;
+  --accent: #8a1c3a;      /* sindoor maroon */
+  --gold: #c98a10;        /* marigold */
+  --warn-bg: #fff4e0;
+  --warn-fg: #6b4300;
+  --bad: #b3261e;
+  --display: "Marcellus", Georgia, serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171113; --surface: #211a1c; --fg: #f2e9ea; --muted: #a8999d; --line: #3a2e31;
+    --accent: #e07a96; --gold: #f0b44a; --warn-bg: #3a2a10; --warn-fg: #f6d29a; --bad: #ff8a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171113; --surface: #211a1c; --fg: #f2e9ea; --muted: #a8999d; --line: #3a2e31;
+  --accent: #e07a96; --gold: #f0b44a; --warn-bg: #3a2a10; --warn-fg: #f6d29a; --bad: #ff8a80;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px;
+}
+.wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); color: var(--accent); }
+h2 { font-size: 1.35rem; }
+.lede { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+.legal {
+  background: var(--warn-bg); color: var(--warn-fg); border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px;
+}
+.legal strong { font-size: 1.02rem; }
+.legal p { margin: 0; font-size: 0.9rem; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+input, select, button { font: inherit; color: inherit; }
+input, select {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0;
+}
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; }
+button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+button.ghost { border-color: transparent; background: transparent; color: var(--muted); padding: 6px 8px; }
+button.ghost:hover { color: var(--bad); }
+
+.budget { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; }
+.budget .field { flex: 1 1 220px; display: grid; gap: 6px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.stat .num { font-family: var(--display); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.stat .num.over { color: var(--bad); }
+.meter { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+.meter > div { height: 100%; background: var(--gold); transition: width .3s; }
+.meter > div.over { background: var(--bad); }
+
+section { display: grid; gap: 12px; }
+.head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; min-width: 760px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td input, td select { padding: 6px 8px; }
+td.val input { text-align: right; font-variant-numeric: tabular-nums; }
+.tag { font-size: 0.72rem; color: var(--muted); }
+
+.cats { display: grid; gap: 8px; }
+.cat { display: grid; grid-template-columns: 130px 1fr 110px; gap: 12px; align-items: center; }
+.cat .bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.cat .bar > div { height: 100%; background: var(--accent); }
+.cat .amt { text-align: right; font-variant-numeric: tabular-nums; }
+
+.list { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; }
+.list pre { margin: 0; white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace; font-size: 0.82rem; overflow-x: auto; }
+.note { font-size: 0.85rem; color: var(--muted); margin: 0; }
+.toast { color: var(--accent); font-size: 0.85rem; min-height: 1.2em; }
+footer { font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+
+@media (max-width: 600px) {
+  .stats { grid-template-columns: 1fr; }
+  .cat { grid-template-columns: 90px 1fr 90px; }
+}
+@media (prefers-reduced-motion: reduce) { .meter > div { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Wedding Gift Planner</h1>
+    <p class="lede">Plan the gifts your family chooses to give the couple, keep within your own budget, and keep the gift list the law asks you to maintain.</p>
+  </header>
+
+  <div class="legal" role="note">
+    <strong>Dowry is a criminal offence in India under the Dowry Prohibition Act, 1961.</strong>
+    <p>Giving, taking or demanding dowry is punishable. Gifts given freely, without any demand, are allowed when they are recorded in a list signed by the bride and groom (Section 3(2) and the 1985 List of Presents Rules). If anyone demands money or gifts, call the Women Helpline 181 or emergency 112.</p>
+  </div>
+
+  <section aria-labelledby="b-h">
+    <h2 id="b-h">Your budget</h2>
+    <div class="budget">
+      <div class="field">
+        <label class="label" for="budget">Total amount you choose to spend on gifts (₹)</label>
+        <input id="budget" type="number" min="0" step="1000" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label class="label" for="bride-occ">Bride's occupation</label>
+        <select id="bride-occ"></select>
+        <input id="bride-occ-other" type="text" placeholder="Type the occupation" aria-label="Bride's occupation, other" hidden>
+        <select id="bride-occ-class" aria-label="Bride's government service class" hidden></select>
+      </div>
+      <div class="field">
+        <label class="label" for="bride">Bride's name</label>
+        <input id="bride" type="text" placeholder="e.g. Priya Sharma">
+      </div>
+      <div class="field">
+        <label class="label" for="groom-occ">Groom's occupation</label>
+        <select id="groom-occ"></select>
+        <input id="groom-occ-other" type="text" placeholder="Type the occupation" aria-label="Groom's occupation, other" hidden>
+        <select id="groom-occ-class" aria-label="Groom's government service class" hidden></select>
+      </div>
+      <div class="field">
+        <label class="label" for="groom">Groom's name</label>
+        <input id="groom" type="text" placeholder="e.g. Rohan Verma">
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="label">Planned gifts</div><div class="num" id="s-total">₹0</div></div>
+      <div class="stat"><div class="label">Left in budget</div><div class="num" id="s-left">₹0</div></div>
+      <div class="stat"><div class="label">Budget used</div><div class="num" id="s-pct">0%</div>
+        <div class="meter"><div id="meter" style="width:0%"></div></div></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="g-h">
+    <div class="head">
+      <h2 id="g-h">Gift register</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="add" class="primary">Add gift</button>
+        <button id="clear">Clear all</button>
+      </div>
+    </div>
+    <p class="note" id="sample-note">These rows are examples. Edit them or clear them to start your own list.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th style="width:24%">Gift</th><th style="width:14%">Category</th><th style="width:13%">Value (₹)</th>
+          <th style="width:17%">Given by</th><th style="width:15%">Relationship</th><th style="width:12%">Given to</th><th></th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="toast" id="confirm-clear" hidden>
+      Remove every gift? <button id="yes-clear">Yes, clear</button> <button id="no-clear">Keep them</button>
+    </p>
+  </section>
+
+  <section aria-labelledby="c-h">
+    <h2 id="c-h">By category</h2>
+    <div class="cats" id="cats"></div>
+  </section>
+
+  <section aria-labelledby="l-h">
+    <div class="head">
+      <h2 id="l-h">List of presents</h2>
+      <button id="copy">Copy list</button>
+    </div>
+    <div class="list">
+      <pre id="list" tabindex="0"></pre>
+      <p class="toast" id="toast" aria-live="polite"></p>
+    </div>
+    <p class="note">The rules ask for a short description, approximate value, who gave it and their relationship to the bride or groom. Print or write it out and have both the bride and groom sign it.</p>
+  </section>
+
+  <footer>Your entries stay in this browser only. Nothing is sent anywhere.</footer>
+</div>
+
+<script>
+const CATS = ["Jewellery", "Clothes", "Household", "Shagun (cash)", "Electronics", "Other"];
+const TO = ["Bride", "Groom", "Couple"];
+const KEY = "wedding-gift-planner-v1";
+const fmt = n => "₹" + Math.round(n || 0).toLocaleString("en-IN");
+
+const SAMPLE = {
+  budget: 300000, couple: "", sample: true,
+  gifts: [
+    { item: "Gold earrings", cat: "Jewellery", value: 85000, by: "Sunita Sharma", rel: "Mother of bride", to: "Bride" },
+    { item: "Silk sarees (2)", cat: "Clothes", value: 30000, by: "Meena Verma", rel: "Aunt of bride", to: "Bride" },
+    { item: "Dinner set & cookware", cat: "Household", value: 18000, by: "Rajesh Sharma", rel: "Uncle of bride", to: "Couple" },
+    { item: "Shagun envelope", cat: "Shagun (cash)", value: 21000, by: "Kamla Devi", rel: "Grandmother of bride", to: "Couple" },
+  ]
+};
+
+let state;
+try { state = JSON.parse(localStorage.getItem(KEY)) || structuredClone(SAMPLE); }
+catch { state = structuredClone(SAMPLE); }
+
+const $ = id => document.getElementById(id);
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }
+
+function opts(list, sel) { return list.map(o => `<option${o === sel ? " selected" : ""}>${o}</option>`).join(""); }
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function renderRows() {
+  $("rows").innerHTML = state.gifts.map((g, i) => `
+    <tr data-i="${i}">
+      <td><input id="item-${i}" data-k="item" value="${esc(g.item)}" placeholder="Describe the gift" aria-label="Gift"></td>
+      <td><select id="cat-${i}" data-k="cat" aria-label="Category">${opts(CATS, g.cat)}</select></td>
+      <td class="val"><input id="value-${i}" data-k="value" type="number" min="0" step="500" value="${g.value || ""}" aria-label="Value in rupees"></td>
+      <td><input id="by-${i}" data-k="by" value="${esc(g.by)}" placeholder="Name" aria-label="Given by"></td>
+      <td><input id="rel-${i}" data-k="rel" value="${esc(g.rel)}" placeholder="e.g. Uncle of bride" aria-label="Relationship"></td>
+      <td><select id="to-${i}" data-k="to" aria-label="Given to">${opts(TO, g.to)}</select></td>
+      <td><button class="ghost" data-del="${i}" aria-label="Remove gift">Remove</button></td>
+    </tr>`).join("") ||
+    `<tr><td colspan="7" class="note" style="padding:16px">No gifts yet. Choose Add gift to start your list.</td></tr>`;
+}
+
+function renderSummary() {
+  const total = state.gifts.reduce((s, g) => s + (+g.value || 0), 0);
+  const budget = +state.budget || 0;
+  const left = budget - total;
+  const pct = budget ? Math.round(total / budget * 100) : 0;
+  $("s-total").textContent = fmt(total);
+  $("s-left").textContent = left < 0 ? "−" + fmt(-left) : fmt(left);
+  $("s-left").classList.toggle("over", left < 0);
+  $("s-pct").textContent = budget ? pct + "%" : "—";
+  $("s-pct").classList.toggle("over", pct > 100);
+  $("meter").style.width = Math.min(pct, 100) + "%";
+  $("meter").classList.toggle("over", pct > 100);
+
+  const byCat = CATS.map(c => [c, state.gifts.filter(g => g.cat === c).reduce((s, g) => s + (+g.value || 0), 0)]).filter(([, v]) => v > 0);
+  const max = Math.max(1, ...byCat.map(([, v]) => v));
+  $("cats").innerHTML = byCat.length ? byCat.map(([c, v]) => `
+    <div class="cat"><span>${c}</span><div class="bar"><div style="width:${v / max * 100}%"></div></div><span class="amt">${fmt(v)}</span></div>`).join("")
+    : `<p class="note">Add gift values to see the split by category.</p>`;
+
+  const lines = [
+    "LIST OF PRESENTS GIVEN AT THE TIME OF MARRIAGE",
+    "(Dowry Prohibition (Maintenance of Lists of Presents to the Bride and Bridegroom) Rules, 1985)",
+    "",
+    "Bride: " + (state.bride || "____________________") + occText("bride"),
+    "Groom: " + (state.groom || "____________________") + occText("groom"),
+    "",
+    ...state.gifts.filter(g => g.item || g.value).map((g, i) =>
+      `${i + 1}. ${g.item || "(gift)"} | Approx. value: ${fmt(g.value)} | Given by: ${g.by || "—"} | Relationship: ${g.rel || "—"} | To: ${g.to}`),
+    "",
+    "Total approximate value: " + fmt(total),
+    "",
+    "All the above presents were given voluntarily, without any demand.",
+    "",
+    "Signature of bride" + (state.bride ? " (" + state.bride + ")" : "") + ": ____________________",
+    "Signature of groom" + (state.groom ? " (" + state.groom + ")" : "") + ": ____________________",
+    "Date: ____________"
+  ];
+  $("list").textContent = lines.join("\n");
+  $("sample-note").hidden = !state.sample;
+}
+
+function render() { renderRows(); renderSummary(); }
+
+$("budget").value = state.budget || "";
+if (state.couple && !state.bride && !state.groom) { state.bride = state.couple; delete state.couple; }
+$("bride").value = state.bride || "";
+$("groom").value = state.groom || "";
+$("budget").addEventListener("input", e => { state.budget = +e.target.value || 0; save(); renderSummary(); });
+$("bride").addEventListener("input", e => { state.bride = e.target.value; save(); renderSummary(); });
+$("groom").addEventListener("input", e => { state.groom = e.target.value; save(); renderSummary(); });
+const OCCS = ["Student", "Teacher / Professor", "Doctor", "Nurse", "Engineer", "Software / IT professional",
+  "Government employee", "Defence / Police", "Lawyer", "Chartered Accountant", "Banking / Finance",
+  "Business owner", "Farmer", "Self-employed", "Private sector employee", "Homemaker", "Not working"];
+const GOV = "Government employee";
+const CLASSES = ["Class 4", "Class 3", "Class 2", "Class 1"];
+function occText(who) {
+  const o = state[who + "Occ"]; if (!o) return "";
+  const c = o === GOV && state[who + "OccClass"] ? ", " + state[who + "OccClass"] : "";
+  return " (" + o + c + ")";
+}
+function setupOcc(id, key) {
+  const sel = $(id), other = $(id + "-other"), cls = $(id + "-class");
+  sel.innerHTML = `<option value="">Select occupation</option>` +
+    OCCS.map(o => `<option>${o}</option>`).join("") + `<option value="__other">Other</option>`;
+  cls.innerHTML = `<option value="">Select class</option>` + CLASSES.map(c => `<option>${c}</option>`).join("");
+  const cur = state[key] || "";
+  if (cur && !OCCS.includes(cur)) { sel.value = "__other"; other.hidden = false; other.value = cur; }
+  else sel.value = cur;
+  cls.hidden = sel.value !== GOV;
+  cls.value = state[key + "Class"] || "";
+  cls.addEventListener("change", () => { state[key + "Class"] = cls.value; save(); renderSummary(); });
+  sel.addEventListener("change", () => {
+    const isOther = sel.value === "__other";
+    other.hidden = !isOther;
+    cls.hidden = sel.value !== GOV;
+    if (sel.value !== GOV) { state[key + "Class"] = ""; cls.value = ""; }
+    state[key] = isOther ? other.value.trim() : sel.value;
+    if (isOther) other.focus();
+    if (sel.value === GOV) cls.focus();
+    save(); renderSummary();
+  });
+  other.addEventListener("input", () => { state[key] = other.value.trim(); save(); renderSummary(); });
+}
+setupOcc("bride-occ", "brideOcc");
+setupOcc("groom-occ", "groomOcc");
+
+$("rows").addEventListener("input", e => {
+  const tr = e.target.closest("tr[data-i]"); const k = e.target.dataset.k;
+  if (!tr || !k) return;
+  const g = state.gifts[+tr.dataset.i];
+  g[k] = k === "value" ? (+e.target.value || 0) : e.target.value;
+  state.sample = false; save(); renderSummary();
+});
+$("rows").addEventListener("click", e => {
+  const d = e.target.dataset.del; if (d === undefined) return;
+  state.gifts.splice(+d, 1); state.sample = false; save(); render();
+});
+$("add").addEventListener("click", () => {
+  state.gifts.push({ item: "", cat: "Jewellery", value: 0, by: "", rel: "", to: "Bride" });
+  state.sample = false; save(); render();
+  const i = state.gifts.length - 1; $("item-" + i)?.focus();
+});
+$("clear").addEventListener("click", () => { $("confirm-clear").hidden = false; });
+$("no-clear").addEventListener("click", () => { $("confirm-clear").hidden = true; });
+$("yes-clear").addEventListener("click", () => {
+  state.gifts = []; state.sample = false; save(); render(); $("confirm-clear").hidden = true;
+});
+$("copy").addEventListener("click", () => {
+  const text = $("list").textContent;
+  navigator.clipboard.writeText(text).then(() => { $("toast").textContent = "List copied."; })
+    .catch(() => {
+      const r = document.createRange(); r.selectNodeContents($("list"));
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      $("toast").textContent = "Text selected. Press Ctrl+C to copy.";
+    });
+});
+
+render();
+</script>
+
+</body>
+</html>
